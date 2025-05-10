@@ -23,8 +23,10 @@ Customize keywords in **cfg/** with a simple key-value syntax, similar to **INI*
 Then the values are assigned to the keys, in other words, to the actual C# properties via reflection. The language has not so many, but enough keywords to program things. Note that the code must define a **Program** class and a constructor to run the program.
 
 ## Coding
+Below I showed class definition, object creation/deletion, class inheritance and polymorphism. So far, Zenth doesn't support **Garbage Collection**, and all objects must be managed manually.
+
 ### Example Code
-I showed class definition, object creation/deletion, class inheritance and polymorphism. Note that Zenth doesn't support **Garbage Collection** so far, and all the objects need to be managed manually.
+Note that the following code uses the default syntax, which can be configured in **cfg/**.
 ```js
 import zenth
 
@@ -80,7 +82,7 @@ class Program
 }
 ```
 ### Example Projects
-I made 2 example projects in **examples/** to showcase what the language can do.
+I made 2 example projects in **examples/** to showcase what Zenth is capable of doing.
 - Conway's Game Of Life
 - Short C#/.NET Quiz
 
@@ -125,14 +127,34 @@ You may extend the codebase in **Zenth.Library**, by adding new classes that can
 - **MemberFunction(name):** for methods
 - **MemberVariable(name):** for variables and properties
 
-Note that constructors don't require an attribute and can be freely used in this language. Also all values or method arguments must implement or be **IValue**, as my language does not work with regular classes or structs such as **bool**, **float**, **string**, so on.
+### Usage Example
+```js
+// Uses Vector2Struct from Zenth.Library
+var vector = new vec2(0.1, 50)
+var xy = vector.x + vector.y
+var mag = vector.magnitude
+```
 
-## How it's Made
+Note that constructors don't require an attribute and can be freely used in Zenth. Also all values and method arguments must implement or be **IValue**, as my language does not work with regular classes or structs.
+
+## How It Works
+It's written in pure C# using .NET 9.0.
+
 ### A bit of backstory
-This is my third custom programming language and I started this project a while ago, and it's the most optimized and clean version so far, good enough to finally publish. It's written in pure C# using .NET 9.0 and follows the Onion Architecture with a little adjustments. At the time, I was just learning the Onion Architecture and decided to challenge myself with this idea of creating a programming language. The project was buggy and messy at first, and I eventually dropped it. But a few days ago, I came back, fixed most of the bugs, almost completely changed the architecture, and added optimization with new features.
+This is my third custom programming language and I started this project a while ago, and it's the most optimized and clean version so far, good enough to finally publish. At the time, I was just learning the Onion Architecture and decided to challenge myself with this idea of creating a programming language. The project was buggy and messy at first, and I eventually dropped it. But a few days ago, I came back, fixed most of the bugs, almost completely changed the architecture, and added optimization with new features.
 
 ### Pseudo-Compiler
 I wouldn't call it a real compiler. It just reads the code and wraps it into classes such as **IfStatement**, **ObjectCreation**, **MemberPath** and so on. It doesn't interpret character-by-character at runtime, since that would be too CPU-intensive.
+
+### Architecture
+As mentioned earlier, it uses the Onion Architecture, but with a little adjustments. I preferred using **ReadOnlySpan of chars** over **string**, as a bunch of text is managed by the compiler, and I don't want extra memory allocation. I used custom extensions for dictionaries for faster execution and alternate lookups for no need to convert a **ReadOnlySpan of chars** into **string**.
+
+### Projects
+- Zenth.Core: Independent project that defines all the coding wrappers and necessary interfaces
+- Zenth.Infrastructure: Works with the core project, manages data, contexts and databases, handles functions and variables
+- Zenth.Application: Surprisingly not many things here. It just compiles everything and works with the core project
+- Zenth.Api: The main project that injects dependencies, applies configuration, and manages the console before compilation
+- Zenth.Library: Provides a possibility to extend the codebase with C# code integration via pure reflection
 
 ## License
 Licensed under the MIT License. See **LICENSE** for details.
