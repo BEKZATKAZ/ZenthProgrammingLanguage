@@ -1,0 +1,64 @@
+// MIT License
+// 
+// Copyright (c) 2025 BEKZATKAZ
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+using Zenth.Core.Common.Lines.Interfaces;
+using System.Reflection;
+using Zenth.Core.Common.Codes;
+
+namespace Zenth.Core.Common;
+
+public sealed record Line(Type LineType, object?[] Arguments)
+{
+    public LineSource Source { get; set; }
+    public List<LineSource>? BodyCode;
+
+    public bool HasInterface<T>() => LineType.GetInterface(typeof(T).Name) is not null;
+
+    public ILine Build()
+    {
+        object?[] arguments = Arguments;
+
+        List<ParameterInfo> parameters = [.. LineType
+            .GetConstructors()[0]
+            .GetParameters()];
+
+        if (parameters.Count > arguments.Length)
+        {
+            Type bodyType = typeof(CompiledCode);
+
+            int bodyArgumentIndex = parameters
+                .FindIndex(x => x.ParameterType == bodyType);
+
+            List<object?> argumentsList = [.. arguments];
+
+            argumentsList.Insert(bodyArgumentIndex, CompiledCode.Empty);
+
+            arguments = [.. argumentsList];
+        }
+
+        return (ILine)(Activator.CreateInstance(LineType, arguments)
+            ?? throw new NullReferenceException("Cannot create line"));
+    }
+
+    public static Line Create<TLine>(params object?[]? arguments)
+        where TLine : ILine => new(typeof(TLine), arguments ?? []);
+}
